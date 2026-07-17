@@ -209,7 +209,7 @@ function parseForm(html) {
       const columns = options;
       for (const rowField of item[4]) {
         const rowEntryId = rowField[0];
-        const rowLabel = rowField[3] || '';
+        const rowLabel = Array.isArray(rowField[3]) ? rowField[3][0] : (rowField[3] || '');
         questions.push({
           title: title + ' → ' + rowLabel,
           entryId: 'entry.' + rowEntryId,

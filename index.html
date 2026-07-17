@@ -70,9 +70,13 @@
         <input id="repeatCount" type="number" value="1" min="1" max="10000" />
       </div>
       <div class="field">
-        <label>Delay (ms)</label>
-        <input id="delayMs" type="number" value="150" min="0" max="5000" />
-        <div class="hint">0 = nhanh nhat, 150-300 = an toan</div>
+        <label>Delay min (ms)</label>
+        <input id="delayMin" type="number" value="800" min="0" max="30000" />
+      </div>
+      <div class="field">
+        <label>Delay max (ms)</label>
+        <input id="delayMax" type="number" value="3000" min="0" max="30000" />
+        <div class="hint">Random giua min-max, giong nguoi that</div>
       </div>
     </div>
     <div class="actions">
@@ -95,7 +99,7 @@ const CORS_PROXIES = [
 
 let formData = null;
 let formAction = null;
-let running = false;
+let sw = null;
 
 const $ = id => document.getElementById(id);
 
@@ -110,6 +114,42 @@ function setProgress(pct) {
   const fill = bar.querySelector('.fill');
   bar.style.display = pct >= 0 ? 'block' : 'none';
   fill.style.width = pct + '%';
+}
+
+// Register Service Worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').then(reg => {
+    sw = reg;
+    if (navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({ action: 'status' });
+    }
+  });
+
+  navigator.serviceWorker.addEventListener('message', (e) => {
+    const msg = e.data;
+    if (msg.type === 'progress') {
+      const pct = Math.round((msg.current / msg.total) * 100);
+      setProgress(pct);
+      setStatus('Dang gui ' + msg.current + '/' + msg.total + ' (OK: ' + msg.ok + ', Loi: ' + msg.fail + ')', 'run');
+      showRunningUI(true);
+    } else if (msg.type === 'done') {
+      setProgress(100);
+      setStatus('Xong! ' + msg.ok + '/' + msg.total + ' thanh cong' + (msg.fail ? ', ' + msg.fail + ' loi' : ''), 'ok');
+      showRunningUI(false);
+    } else if (msg.type === 'status' && msg.running) {
+      setStatus('Dang chay nen... ' + (msg.current || 0) + '/' + (msg.total || '?') + ' (OK: ' + (msg.ok || 0) + ')', 'run');
+      const pct = msg.total ? Math.round((msg.current / msg.total) * 100) : 0;
+      setProgress(pct);
+      showRunningUI(true);
+    }
+  });
+}
+
+function showRunningUI(isRunning) {
+  if ($('actionsCard').style.display === 'none') return;
+  $('stopBtn').style.display = isRunning ? 'block' : 'none';
+  $('submitBtn').style.display = isRunning ? 'none' : '';
+  $('fillBtn').style.display = isRunning ? 'none' : '';
 }
 
 async function fetchWithProxy(url) {
@@ -228,26 +268,6 @@ function renderQuestions(questions) {
   });
 }
 
-function pickByPct(options, pcts) {
-  const total = pcts.reduce((a, b) => a + b, 0);
-  if (total === 0) return options[0];
-  const r = Math.random() * total;
-  let sum = 0;
-  for (let i = 0; i < pcts.length; i++) {
-    sum += pcts[i];
-    if (r < sum) return options[i];
-  }
-  return options[options.length - 1];
-}
-
-function pickMulti(options, pcts) {
-  const sel = [];
-  for (let i = 0; i < options.length; i++) {
-    if (Math.random() * 100 < pcts[i]) sel.push(options[i]);
-  }
-  return sel.length ? sel : [options[0]];
-}
-
 function getConfigs() {
   return formData.map((q, i) => {
     if (q.type === 'text' || q.type === 'paragraph') {
@@ -259,31 +279,12 @@ function getConfigs() {
   });
 }
 
-function genAnswer(q, cfg) {
-  if (q.type === 'text' || q.type === 'paragraph') {
-    return (!cfg.values || !cfg.values.length) ? '' : cfg.values[Math.floor(Math.random() * cfg.values.length)];
+function sendToSW(msg) {
+  if (navigator.serviceWorker.controller) {
+    navigator.serviceWorker.controller.postMessage(msg);
+  } else if (sw && sw.active) {
+    sw.active.postMessage(msg);
   }
-  if (q.type === 'checkbox') return pickMulti(q.options, cfg.percentages || []);
-  return pickByPct(q.options, cfg.percentages || []);
-}
-
-async function submitOnce(configs) {
-  const params = new URLSearchParams();
-  for (let i = 0; i < formData.length; i++) {
-    const q = formData[i];
-    const answer = genAnswer(q, configs[i]);
-    if (q.type === 'checkbox' && Array.isArray(answer)) {
-      answer.forEach(a => params.append(q.entryId, a));
-    } else {
-      params.append(q.entryId, answer);
-    }
-  }
-  await fetch(formAction, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: params.toString(),
-    mode: 'no-cors'
-  });
 }
 
 // SCAN
@@ -325,59 +326,46 @@ $('scanBtn').addEventListener('click', async () => {
 });
 
 // FILL 1
-$('fillBtn').addEventListener('click', async () => {
+$('fillBtn').addEventListener('click', () => {
   if (!formData || !formAction) return;
   setStatus('Dang gui 1 lan...', 'run');
-  try {
-    await submitOnce(getConfigs());
-    setStatus('Xong! Da gui 1 lan thanh cong', 'ok');
-  } catch (e) {
-    setStatus('Loi: ' + e.message, 'err');
-  }
+  sendToSW({
+    action: 'start',
+    formAction,
+    formData,
+    configs: getConfigs(),
+    count: 1,
+    delayMin: 0,
+    delayMax: 0
+  });
+  showRunningUI(true);
 });
 
 // FILL MULTI
-$('submitBtn').addEventListener('click', async () => {
+$('submitBtn').addEventListener('click', () => {
   if (!formData || !formAction) return;
   const count = parseInt($('repeatCount').value) || 1;
-  const delay = parseInt($('delayMs').value) || 150;
-  const configs = getConfigs();
+  const delayMin = parseInt($('delayMin').value) || 0;
+  const delayMax = parseInt($('delayMax').value) || 0;
 
-  running = true;
-  $('stopBtn').style.display = 'block';
-  $('submitBtn').style.display = 'none';
-  $('fillBtn').style.display = 'none';
+  sendToSW({
+    action: 'start',
+    formAction,
+    formData,
+    configs: getConfigs(),
+    count,
+    delayMin: Math.min(delayMin, delayMax),
+    delayMax: Math.max(delayMin, delayMax)
+  });
+  showRunningUI(true);
   setProgress(0);
-
-  let ok = 0, fail = 0;
-
-  for (let n = 0; n < count; n++) {
-    if (!running) break;
-    try {
-      await submitOnce(configs);
-      ok++;
-    } catch (e) {
-      fail++;
-    }
-    const pct = Math.round(((n + 1) / count) * 100);
-    setProgress(pct);
-    setStatus('Dang gui ' + (n + 1) + '/' + count + ' (OK: ' + ok + ', Loi: ' + fail + ')', 'run');
-
-    if (delay > 0 && n < count - 1) {
-      await new Promise(r => setTimeout(r, delay));
-    }
-  }
-
-  running = false;
-  $('stopBtn').style.display = 'none';
-  $('submitBtn').style.display = '';
-  $('fillBtn').style.display = '';
-  setStatus('Xong! ' + ok + '/' + count + ' thanh cong' + (fail ? ', ' + fail + ' loi' : ''), 'ok');
+  setStatus('Dang gui 0/' + count + '...', 'run');
 });
 
 // STOP
 $('stopBtn').addEventListener('click', () => {
-  running = false;
+  sendToSW({ action: 'stop' });
+  showRunningUI(false);
   setStatus('Da dung', 'err');
 });
 </script>

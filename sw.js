@@ -3,8 +3,8 @@ let job = null;
 self.addEventListener('message', (e) => {
   const msg = e.data;
   if (msg.action === 'start') {
-    job = { ...msg, running: true };
-    runJob(job);
+    job = { ...msg, running: true, ok: 0, fail: 0, current: 0 };
+    e.waitUntil(runJob(job));
   } else if (msg.action === 'stop') {
     if (job) job.running = false;
   } else if (msg.action === 'status') {
@@ -44,7 +44,7 @@ function genAnswer(q, cfg) {
   return pickByPct(q.options, cfg.percentages || []);
 }
 
-async function submitOnce(formAction, formData, configs) {
+async function submitOnce(formAction, formData, configs, pageCount) {
   const params = new URLSearchParams();
   for (let i = 0; i < formData.length; i++) {
     const q = formData[i];
@@ -56,26 +56,24 @@ async function submitOnce(formAction, formData, configs) {
     }
   }
   params.append('fvv', '1');
-  params.append('pageHistory', '0');
+  const ph = [];
+  for (let p = 0; p < pageCount; p++) ph.push(p);
+  params.append('pageHistory', ph.join(','));
   params.append('fbzx', String(Date.now() * -1 + Math.floor(Math.random() * 1000000)));
-  params.append('submissionTimestamp', String(Date.now()));
   await fetch(formAction, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: params.toString(),
-    mode: 'no-cors'
+    mode: 'no-cors',
+    credentials: 'include'
   });
 }
 
 async function runJob(j) {
-  j.ok = 0;
-  j.fail = 0;
-  j.current = 0;
-
   for (let n = 0; n < j.count; n++) {
     if (!j.running) break;
     try {
-      await submitOnce(j.formAction, j.formData, j.configs);
+      await submitOnce(j.formAction, j.formData, j.configs, j.pageCount || 1);
       j.ok++;
     } catch (e) {
       j.fail++;

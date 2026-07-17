@@ -117,6 +117,11 @@
     color: #fff;
     box-shadow: 0 3px 10px rgba(16,185,129,0.3);
   }
+  #bgBtn {
+    background: linear-gradient(135deg, #7c3aed, #8b5cf6);
+    color: #fff;
+    box-shadow: 0 3px 10px rgba(124,58,237,0.3);
+  }
   #stopBtn {
     background: linear-gradient(135deg, #dc2626, #ef4444);
     color: #fff; display: none;
@@ -227,6 +232,7 @@
     <div class="actions">
       <button id="fillBtn">Gui 1 Lan</button>
       <button id="submitBtn">Gui Nhieu Lan</button>
+      <button id="bgBtn">Chay Nen</button>
       <button id="stopBtn">Dung Lai</button>
     </div>
     <div class="progress-bar"><div class="fill"></div></div>
@@ -280,11 +286,11 @@ if ('serviceWorker' in navigator) {
     if (msg.type === 'progress') {
       const pct = Math.round((msg.current / msg.total) * 100);
       setProgress(pct);
-      setStatus('Dang gui ' + msg.current + '/' + msg.total + ' (OK: ' + msg.ok + ', Loi: ' + msg.fail + ')', 'run');
+      setStatus('Nen: ' + msg.current + '/' + msg.total + ' (OK: ' + msg.ok + ', Loi: ' + msg.fail + ')', 'run');
       showRunningUI(true);
     } else if (msg.type === 'done') {
       setProgress(100);
-      setStatus('Xong! ' + msg.ok + '/' + msg.total + ' thanh cong' + (msg.fail ? ', ' + msg.fail + ' loi' : ''), 'ok');
+      setStatus('Nen xong! ' + msg.ok + '/' + msg.total + ' thanh cong' + (msg.fail ? ', ' + msg.fail + ' loi' : ''), 'ok');
       showRunningUI(false);
     } else if (msg.type === 'status' && msg.running) {
       setStatus('Dang chay nen... ' + (msg.current || 0) + '/' + (msg.total || '?') + ' (OK: ' + (msg.ok || 0) + ')', 'run');
@@ -300,6 +306,15 @@ function showRunningUI(isRunning) {
   $('stopBtn').style.display = isRunning ? 'block' : 'none';
   $('submitBtn').style.display = isRunning ? 'none' : '';
   $('fillBtn').style.display = isRunning ? 'none' : '';
+  $('bgBtn').style.display = isRunning ? 'none' : '';
+}
+
+function sendToSW(msg) {
+  if (navigator.serviceWorker.controller) {
+    navigator.serviceWorker.controller.postMessage(msg);
+  } else if (sw && sw.active) {
+    sw.active.postMessage(msg);
+  }
 }
 
 async function fetchWithProxy(url) {
@@ -605,9 +620,32 @@ $('submitBtn').addEventListener('click', async () => {
   setStatus('Xong! ' + ok + '/' + count + ' thanh cong' + (fail ? ', ' + fail + ' loi' : ''), 'ok');
 });
 
+// CHAY NEN (Service Worker)
+$('bgBtn').addEventListener('click', () => {
+  if (!formData || !formAction) return;
+  const count = parseInt($('repeatCount').value) || 1;
+  const delayMin = parseInt($('delayMin').value) || 0;
+  const delayMax = parseInt($('delayMax').value) || 0;
+
+  sendToSW({
+    action: 'start',
+    formAction,
+    formData,
+    configs: getConfigs(),
+    count,
+    pageCount: formPageCount,
+    delayMin: Math.min(delayMin, delayMax),
+    delayMax: Math.max(delayMin, delayMax)
+  });
+  showRunningUI(true);
+  setProgress(0);
+  setStatus('Dang chay nen ' + count + ' lan — co the dong tab', 'run');
+});
+
 // STOP
 $('stopBtn').addEventListener('click', () => {
   running = false;
+  sendToSW({ action: 'stop' });
   showRunningUI(false);
   setStatus('Da dung', 'err');
 });

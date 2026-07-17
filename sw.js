@@ -55,6 +55,10 @@ async function submitOnce(formAction, formData, configs) {
       params.append(q.entryId, answer);
     }
   }
+  params.append('fvv', '1');
+  params.append('pageHistory', '0');
+  params.append('fbzx', String(Date.now() * -1 + Math.floor(Math.random() * 1000000)));
+  params.append('submissionTimestamp', String(Date.now()));
   await fetch(formAction, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },

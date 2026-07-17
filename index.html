@@ -465,27 +465,55 @@ function randInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-async function submitOnce(configs) {
-  const params = new URLSearchParams();
-  for (let i = 0; i < formData.length; i++) {
-    const q = formData[i];
-    const answer = genAnswer(q, configs[i]);
-    if (q.type === 'checkbox' && Array.isArray(answer)) {
-      answer.forEach(a => params.append(q.entryId, a));
-    } else {
-      params.append(q.entryId, answer);
+function submitOnce(configs) {
+  return new Promise((resolve) => {
+    var frameName = 'sf_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+    var iframe = document.createElement('iframe');
+    iframe.name = frameName;
+    iframe.style.display = 'none';
+    document.body.appendChild(iframe);
+
+    var form = document.createElement('form');
+    form.method = 'POST';
+    form.action = formAction;
+    form.target = frameName;
+    form.style.display = 'none';
+
+    for (var i = 0; i < formData.length; i++) {
+      var q = formData[i];
+      var answer = genAnswer(q, configs[i]);
+      if (q.type === 'checkbox' && Array.isArray(answer)) {
+        answer.forEach(function(a) {
+          var inp = document.createElement('input');
+          inp.type = 'hidden'; inp.name = q.entryId; inp.value = a;
+          form.appendChild(inp);
+        });
+      } else {
+        var inp = document.createElement('input');
+        inp.type = 'hidden'; inp.name = q.entryId; inp.value = answer;
+        form.appendChild(inp);
+      }
     }
-  }
-  params.append('fvv', '1');
-  var ph = [];
-  for (var p = 0; p < formPageCount; p++) ph.push(p);
-  params.append('pageHistory', ph.join(','));
-  params.append('fbzx', String(Date.now() * -1 + Math.floor(Math.random() * 1000000)));
-  await fetch(formAction, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: params.toString(),
-    mode: 'no-cors'
+
+    var addHidden = function(name, val) {
+      var inp = document.createElement('input');
+      inp.type = 'hidden'; inp.name = name; inp.value = val;
+      form.appendChild(inp);
+    };
+    addHidden('fvv', '1');
+    var ph = [];
+    for (var p = 0; p < formPageCount; p++) ph.push(p);
+    addHidden('pageHistory', ph.join(','));
+    addHidden('fbzx', String(Date.now() * -1 + Math.floor(Math.random() * 1000000)));
+
+    document.body.appendChild(form);
+    form.submit();
+
+    setTimeout(function() {
+      form.remove();
+      iframe.remove();
+      resolve();
+    }, 1500);
   });
 }
 

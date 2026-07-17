@@ -427,12 +427,58 @@ function getConfigs() {
   });
 }
 
-function sendToSW(msg) {
-  if (navigator.serviceWorker.controller) {
-    navigator.serviceWorker.controller.postMessage(msg);
-  } else if (sw && sw.active) {
-    sw.active.postMessage(msg);
+function pickByPct(options, pcts) {
+  const total = pcts.reduce((a, b) => a + b, 0);
+  if (total === 0) return options[0];
+  const r = Math.random() * total;
+  let sum = 0;
+  for (let i = 0; i < pcts.length; i++) {
+    sum += pcts[i];
+    if (r < sum) return options[i];
   }
+  return options[options.length - 1];
+}
+
+function pickMulti(options, pcts) {
+  const sel = [];
+  for (let i = 0; i < options.length; i++) {
+    if (Math.random() * 100 < pcts[i]) sel.push(options[i]);
+  }
+  return sel.length ? sel : [options[0]];
+}
+
+function genAnswer(q, cfg) {
+  if (q.type === 'text' || q.type === 'paragraph') {
+    return (!cfg.values || !cfg.values.length) ? '' : cfg.values[Math.floor(Math.random() * cfg.values.length)];
+  }
+  if (q.type === 'checkbox') return pickMulti(q.options, cfg.percentages || []);
+  return pickByPct(q.options, cfg.percentages || []);
+}
+
+function randInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+async function submitOnce(configs) {
+  const params = new URLSearchParams();
+  for (let i = 0; i < formData.length; i++) {
+    const q = formData[i];
+    const answer = genAnswer(q, configs[i]);
+    if (q.type === 'checkbox' && Array.isArray(answer)) {
+      answer.forEach(a => params.append(q.entryId, a));
+    } else {
+      params.append(q.entryId, answer);
+    }
+  }
+  params.append('fvv', '1');
+  params.append('pageHistory', '0');
+  params.append('fbzx', String(Date.now() * -1 + Math.floor(Math.random() * 1000000)));
+  await fetch(formAction, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: params.toString(),
+    mode: 'no-cors'
+  });
 }
 
 // SCAN
@@ -474,45 +520,57 @@ $('scanBtn').addEventListener('click', async () => {
 });
 
 // FILL 1
-$('fillBtn').addEventListener('click', () => {
+$('fillBtn').addEventListener('click', async () => {
   if (!formData || !formAction) return;
   setStatus('Dang gui 1 lan...', 'run');
-  sendToSW({
-    action: 'start',
-    formAction,
-    formData,
-    configs: getConfigs(),
-    count: 1,
-    delayMin: 0,
-    delayMax: 0
-  });
-  showRunningUI(true);
+  try {
+    await submitOnce(getConfigs());
+    setStatus('Xong! Da gui 1 lan thanh cong', 'ok');
+  } catch (e) {
+    setStatus('Loi: ' + e.message, 'err');
+  }
 });
 
 // FILL MULTI
-$('submitBtn').addEventListener('click', () => {
+let running = false;
+$('submitBtn').addEventListener('click', async () => {
   if (!formData || !formAction) return;
   const count = parseInt($('repeatCount').value) || 1;
   const delayMin = parseInt($('delayMin').value) || 0;
   const delayMax = parseInt($('delayMax').value) || 0;
+  const configs = getConfigs();
 
-  sendToSW({
-    action: 'start',
-    formAction,
-    formData,
-    configs: getConfigs(),
-    count,
-    delayMin: Math.min(delayMin, delayMax),
-    delayMax: Math.max(delayMin, delayMax)
-  });
+  running = true;
   showRunningUI(true);
   setProgress(0);
-  setStatus('Dang gui 0/' + count + '...', 'run');
+
+  let ok = 0, fail = 0;
+  for (let n = 0; n < count; n++) {
+    if (!running) break;
+    try {
+      await submitOnce(configs);
+      ok++;
+    } catch (e) {
+      fail++;
+    }
+    const pct = Math.round(((n + 1) / count) * 100);
+    setProgress(pct);
+    setStatus('Dang gui ' + (n + 1) + '/' + count + ' (OK: ' + ok + ', Loi: ' + fail + ')', 'run');
+
+    if (running && n < count - 1) {
+      const delay = randInt(Math.min(delayMin, delayMax), Math.max(delayMin, delayMax));
+      await new Promise(r => setTimeout(r, delay));
+    }
+  }
+
+  running = false;
+  showRunningUI(false);
+  setStatus('Xong! ' + ok + '/' + count + ' thanh cong' + (fail ? ', ' + fail + ' loi' : ''), 'ok');
 });
 
 // STOP
 $('stopBtn').addEventListener('click', () => {
-  sendToSW({ action: 'stop' });
+  running = false;
   showRunningUI(false);
   setStatus('Da dung', 'err');
 });

@@ -169,15 +169,6 @@
 <div class="container">
   <!-- Main App -->
   <div id="mainApp">
-    <div id="userInfo" class="user-info hidden">
-      <img id="userAvatar" src="" alt="">
-      <div>
-        <div id="userName" class="name"></div>
-        <div id="userEmail" class="email"></div>
-      </div>
-      <span class="logout" onclick="handleLogout()">Dang xuat</span>
-    </div>
-
     <div class="nav-tabs">
       <button class="nav-tab active" onclick="switchTab('formFiller')">Auto Fill</button>
       <button class="nav-tab" onclick="switchTab('editTimestamp')">Sua Timestamp</button>
@@ -224,33 +215,46 @@
     <!-- Tab 2: Edit Timestamp -->
     <div id="tab-editTimestamp" class="tab-content">
       <div class="card">
-        <h3><span class="icon">🕐</span> Sua Timestamp trong Sheet</h3>
-        <label>Link Google Sheet</label>
-        <input type="url" id="sheetUrl" placeholder="https://docs.google.com/spreadsheets/d/.../edit">
-        <label>Ten Sheet (tab)</label>
-        <input type="text" id="sheetName" value="Form_Responses" placeholder="Form_Responses hoac Câu trả lời biểu mẫu 1">
+        <h3><span class="icon">🕐</span> Tao code Random Timestamp</h3>
+        <p style="font-size:13px; color:#64748b; margin-bottom:12px;">
+          Set thong so → Lay code → Dan vao Apps Script trong Google Sheet → Chay.
+        </p>
         <div class="row">
           <div>
             <label>Tu ngay</label>
-            <input type="datetime-local" id="dateFrom" value="2026-01-01T07:00">
+            <input type="date" id="dateFrom" value="2026-01-01">
           </div>
           <div>
             <label>Den ngay</label>
-            <input type="datetime-local" id="dateTo" value="2026-06-17T23:00">
+            <input type="date" id="dateTo" value="2026-06-17">
           </div>
         </div>
+        <label style="margin-top:4px;">Khung gio cho phep (loai tru gio ngu)</label>
         <div class="row">
           <div>
-            <label>Gio min</label>
+            <label>Tu gio</label>
             <input type="number" id="hourMin" value="7" min="0" max="23">
           </div>
           <div>
-            <label>Gio max</label>
+            <label>Den gio</label>
             <input type="number" id="hourMax" value="23" min="0" max="23">
           </div>
         </div>
-        <button class="btn btn-primary" onclick="editTimestamps()" style="margin-top:8px;">🕐 Random Timestamp</button>
+        <p style="font-size:11px; color:#94a3b8; margin-bottom:12px;">VD: 7 → 23 = chi random tu 7h sang den 11h dem (bo 0h-6h)</p>
+        <button class="btn btn-primary" onclick="generateTsCode()">📋 Lay Code</button>
         <div id="tsStatus" class="status-bar"></div>
+        <textarea id="tsCode" style="width:100%;height:220px;margin-top:12px;padding:12px;font-family:'Consolas',monospace;font-size:12px;border:2px solid #e2e8f0;border-radius:10px;background:#1e293b;color:#a7f3d0;display:none;resize:vertical;"></textarea>
+        <button id="btnCopyCode" class="btn btn-secondary" onclick="copyTsCode()" style="margin-top:8px;display:none;">📋 Copy Code</button>
+      </div>
+      <div class="card" style="margin-top:12px;">
+        <h3 style="font-size:14px;"><span class="icon">📖</span> Huong dan</h3>
+        <ol style="font-size:13px; color:#475569; padding-left:20px; line-height:1.8;">
+          <li>Mo Google Sheet can sua</li>
+          <li><b>Tien ich mo rong</b> → <b>Apps Script</b></li>
+          <li>Xoa het code cu, dan code tren vao</li>
+          <li><b>Ctrl+S</b> luu → Bam <b>▶ Chay</b></li>
+          <li>Cho phep quyen → Xong!</li>
+        </ol>
       </div>
     </div>
 
@@ -259,93 +263,64 @@
       <div class="card">
         <h3><span class="icon">📋</span> Copy Sheet (Xoa lich su)</h3>
         <p style="font-size:13px; color:#64748b; margin-bottom:12px;">
-          Tao ban sao spreadsheet — sheet moi se <b>sach lich su chinh sua</b>, khong to xanh.
+          Tao ban sao spreadsheet — sheet moi se <b>sach lich su chinh sua</b>, khong co to xanh.
         </p>
-        <label>Link Google Sheet goc</label>
-        <input type="url" id="copySheetUrl" placeholder="https://docs.google.com/spreadsheets/d/.../edit">
         <label>Ten file moi</label>
         <input type="text" id="copyName" placeholder="VD: Ket qua khao sat">
-        <button class="btn btn-primary" onclick="copySheet()">📋 Copy Sheet</button>
+        <button class="btn btn-primary" onclick="generateCopyCode()">📋 Lay Code</button>
         <div id="copyStatus" class="status-bar"></div>
+        <textarea id="copyCode" style="width:100%;height:180px;margin-top:12px;padding:12px;font-family:'Consolas',monospace;font-size:12px;border:2px solid #e2e8f0;border-radius:10px;background:#1e293b;color:#a7f3d0;display:none;resize:vertical;"></textarea>
+        <button id="btnCopyCopyCode" class="btn btn-secondary" onclick="copyCopyCode()" style="margin-top:8px;display:none;">📋 Copy Code</button>
+      </div>
+      <div class="card" style="margin-top:12px;">
+        <h3 style="font-size:14px;"><span class="icon">📖</span> Huong dan</h3>
+        <ol style="font-size:13px; color:#475569; padding-left:20px; line-height:1.8;">
+          <li>Mo Google Sheet <b>goc</b> (cai can copy)</li>
+          <li><b>Tien ich mo rong</b> → <b>Apps Script</b></li>
+          <li>Dan code → <b>Ctrl+S</b> → <b>▶ Chay</b></li>
+          <li>File moi se xuat hien trong Drive, sach lich su</li>
+        </ol>
       </div>
     </div>
 
     <!-- Tab 4: Set Creation Date -->
     <div id="tab-setDate" class="tab-content">
       <div class="card">
-        <h3><span class="icon">📅</span> Set Ngay Tao File</h3>
+        <h3><span class="icon">📅</span> Set Ngay Sua File</h3>
         <p style="font-size:13px; color:#64748b; margin-bottom:12px;">
-          Thay doi ngay tao & ngay sua cua file Google Drive.
+          Thay doi ngay sua cuoi cung cua file Google Drive.<br>
+          <span style="color:#ef4444; font-size:11px;">Luu y: Ngay tao (createdTime) khong sua duoc, chi sua duoc ngay chinh sua (modifiedTime).</span>
         </p>
-        <label>Link hoac ID file Google Drive</label>
-        <input type="url" id="setDateFileUrl" placeholder="https://docs.google.com/spreadsheets/d/.../edit hoac file ID">
         <div class="row">
-          <div>
-            <label>Ngay tao moi</label>
-            <input type="datetime-local" id="newCreatedDate" value="2026-01-01T08:00">
-          </div>
           <div>
             <label>Ngay sua moi</label>
             <input type="datetime-local" id="newModifiedDate" value="2026-06-17T22:00">
           </div>
         </div>
-        <button class="btn btn-primary" onclick="setFileDate()">📅 Set Ngay</button>
+        <button class="btn btn-primary" onclick="generateDateCode()">📋 Lay Code</button>
         <div id="dateStatus" class="status-bar"></div>
+        <textarea id="dateCode" style="width:100%;height:180px;margin-top:12px;padding:12px;font-family:'Consolas',monospace;font-size:12px;border:2px solid #e2e8f0;border-radius:10px;background:#1e293b;color:#a7f3d0;display:none;resize:vertical;"></textarea>
+        <button id="btnCopyDateCode" class="btn btn-secondary" onclick="copyDateCode()" style="margin-top:8px;display:none;">📋 Copy Code</button>
+      </div>
+      <div class="card" style="margin-top:12px;">
+        <h3 style="font-size:14px;"><span class="icon">📖</span> Huong dan</h3>
+        <ol style="font-size:13px; color:#475569; padding-left:20px; line-height:1.8;">
+          <li>Mo file can doi ngay trong Google Drive</li>
+          <li><b>Tien ich mo rong</b> → <b>Apps Script</b></li>
+          <li>Dan code → <b>Ctrl+S</b> → <b>▶ Chay</b></li>
+          <li>Kiem tra lai ngay sua trong Drive</li>
+        </ol>
       </div>
     </div>
   </div>
 </div>
 
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
-var CLIENT_ID = '282620003952-9pqqir6rk6836ndcouudrrlh37msjs5h.apps.googleusercontent.com';
-var SCOPES = 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/spreadsheets';
-var accessToken = null;
-var tokenClient = null;
 var formAction = '';
 var formData = [];
 var pageCount = 1;
 var configs = [];
 var running = false;
-
-// ========== AUTH (GIS popup) ==========
-function initGIS() {
-  tokenClient = google.accounts.oauth2.initTokenClient({
-    client_id: CLIENT_ID,
-    scope: SCOPES,
-    callback: function(resp) {
-      if (resp.error) return;
-      accessToken = resp.access_token;
-      fetchUserInfo();
-      if (window._pendingAction) { var fn = window._pendingAction; window._pendingAction = null; fn(); }
-    }
-  });
-}
-
-function ensureAuth(callback) {
-  if (accessToken) { callback(); return; }
-  window._pendingAction = callback;
-  tokenClient.requestAccessToken({ prompt: 'consent' });
-}
-
-function handleLogout() {
-  if (accessToken) google.accounts.oauth2.revoke(accessToken);
-  accessToken = null;
-  document.getElementById('userInfo').classList.add('hidden');
-}
-
-function fetchUserInfo() {
-  fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
-    headers: { Authorization: 'Bearer ' + accessToken }
-  }).then(function(r) { return r.json(); })
-  .then(function(user) {
-    if (user.error) { accessToken = null; return; }
-    document.getElementById('userInfo').classList.remove('hidden');
-    document.getElementById('userAvatar').src = user.picture || '';
-    document.getElementById('userName').textContent = user.name || '';
-    document.getElementById('userEmail').textContent = user.email || '';
-  }).catch(function() { accessToken = null; });
-}
 
 // ========== TABS ==========
 function switchTab(tabName) {
@@ -572,133 +547,119 @@ async function submitMany() {
 
 function stopSubmit() { running = false; }
 
-// ========== EDIT TIMESTAMP ==========
+// ========== GENERATE TIMESTAMP CODE ==========
 function extractSheetId(url) {
   var m = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
   return m ? m[1] : url.trim();
 }
 
-async function editTimestamps() {
-  ensureAuth(function() { _editTimestamps(); });
-}
-async function _editTimestamps() {
-  var sheetId = extractSheetId(document.getElementById('sheetUrl').value);
-  var sheetName = document.getElementById('sheetName').value.trim() || 'Form_Responses';
-  var dateFrom = new Date(document.getElementById('dateFrom').value);
-  var dateTo = new Date(document.getElementById('dateTo').value);
+function generateTsCode() {
+  var dateFrom = document.getElementById('dateFrom').value;
+  var dateTo = document.getElementById('dateTo').value;
   var hMin = parseInt(document.getElementById('hourMin').value) || 7;
   var hMax = parseInt(document.getElementById('hourMax').value) || 23;
 
-  if (!sheetId) { showStatus('tsStatus', 'Nhap link Sheet', true); return; }
+  if (!dateFrom || !dateTo) { showStatus('tsStatus', 'Chon ngay bat dau va ket thuc', true); return; }
 
-  showStatus('tsStatus', 'Dang doc du lieu...', false);
+  var parts1 = dateFrom.split('-');
+  var parts2 = dateTo.split('-');
+  var y1 = parts1[0], m1 = parseInt(parts1[1]) - 1, d1 = parts1[2];
+  var y2 = parts2[0], m2 = parseInt(parts2[1]) - 1, d2 = parts2[2];
 
-  try {
-    var res = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + sheetId + '/values/' + encodeURIComponent(sheetName) + '!A:A', {
-      headers: { Authorization: 'Bearer ' + accessToken }
-    });
-    var data = await res.json();
-    if (data.error) throw new Error(data.error.message);
+  var code = 'function randomTimestamps() {\n' +
+    '  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();\n' +
+    '  var lastRow = sheet.getLastRow();\n' +
+    '  if (lastRow < 2) { SpreadsheetApp.getUi().alert("Khong co du lieu"); return; }\n\n' +
+    '  var startDate = new Date(' + y1 + ', ' + m1 + ', ' + d1 + ');  // ' + dateFrom + '\n' +
+    '  var endDate = new Date(' + y2 + ', ' + m2 + ', ' + d2 + ');    // ' + dateTo + '\n' +
+    '  var hourMin = ' + hMin + ';   // Tu ' + hMin + 'h\n' +
+    '  var hourMax = ' + hMax + ';  // Den ' + hMax + 'h\n\n' +
+    '  var startMs = startDate.getTime();\n' +
+    '  var endMs = endDate.getTime();\n' +
+    '  var timestamps = [];\n\n' +
+    '  for (var i = 0; i < lastRow - 1; i++) {\n' +
+    '    var d = new Date(startMs + Math.random() * (endMs - startMs));\n' +
+    '    var h = Math.floor(Math.random() * (hourMax - hourMin)) + hourMin;\n' +
+    '    d.setHours(h, Math.floor(Math.random() * 60), Math.floor(Math.random() * 60));\n' +
+    '    timestamps.push(d);\n' +
+    '  }\n' +
+    '  timestamps.sort(function(a, b) { return a - b; });\n\n' +
+    '  var values = timestamps.map(function(t) {\n' +
+    '    return [Utilities.formatDate(t, "Asia/Ho_Chi_Minh", "dd/MM/yyyy HH:mm:ss")];\n' +
+    '  });\n\n' +
+    '  sheet.getRange(2, 1, values.length, 1).setValues(values);\n' +
+    '  SpreadsheetApp.getUi().alert("Xong! Da random " + values.length + " timestamp (tu ' + hMin + 'h den ' + hMax + 'h)");\n' +
+    '}';
 
-    var rowCount = data.values ? data.values.length - 1 : 0;
-    if (rowCount < 1) { showStatus('tsStatus', 'Khong co du lieu', true); return; }
-
-    showStatus('tsStatus', 'Dang random ' + rowCount + ' timestamp...', false);
-
-    var startMs = dateFrom.getTime();
-    var endMs = dateTo.getTime();
-    var timestamps = [];
-    for (var i = 0; i < rowCount; i++) {
-      var randMs = startMs + Math.random() * (endMs - startMs);
-      var d = new Date(randMs);
-      var h = Math.floor(Math.random() * (hMax - hMin)) + hMin;
-      d.setHours(h, Math.floor(Math.random() * 60), Math.floor(Math.random() * 60));
-      timestamps.push(d);
-    }
-    timestamps.sort(function(a, b) { return a - b; });
-
-    var values = timestamps.map(function(t) {
-      var dd = ('0' + t.getDate()).slice(-2);
-      var mm = ('0' + (t.getMonth() + 1)).slice(-2);
-      var yyyy = t.getFullYear();
-      var hh = ('0' + t.getHours()).slice(-2);
-      var mi = ('0' + t.getMinutes()).slice(-2);
-      var ss = ('0' + t.getSeconds()).slice(-2);
-      return [dd + '/' + mm + '/' + yyyy + ' ' + hh + ':' + mi + ':' + ss];
-    });
-
-    var updateRes = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + sheetId + '/values/' + encodeURIComponent(sheetName) + '!A2:A' + (rowCount + 1) + '?valueInputOption=USER_ENTERED', {
-      method: 'PUT',
-      headers: { Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ values: values })
-    });
-    var updateData = await updateRes.json();
-    if (updateData.error) throw new Error(updateData.error.message);
-
-    showStatus('tsStatus', 'Xong! Da random ' + rowCount + ' timestamp', false);
-  } catch (e) {
-    showStatus('tsStatus', 'Loi: ' + e.message, true);
-  }
+  document.getElementById('tsCode').value = code;
+  document.getElementById('tsCode').style.display = 'block';
+  document.getElementById('btnCopyCode').style.display = 'inline-flex';
+  showStatus('tsStatus', 'Code da san sang! Copy va dan vao Apps Script.', false);
 }
 
-// ========== COPY SHEET ==========
-async function copySheet() {
-  ensureAuth(function() { _copySheet(); });
+function copyTsCode() {
+  var ta = document.getElementById('tsCode');
+  ta.select();
+  document.execCommand('copy');
+  showStatus('tsStatus', 'Da copy code!', false);
 }
-async function _copySheet() {
-  var sheetId = extractSheetId(document.getElementById('copySheetUrl').value);
+
+// ========== COPY SHEET CODE ==========
+function generateCopyCode() {
   var newName = document.getElementById('copyName').value.trim() || 'Copy - Sheet';
 
-  if (!sheetId) { showStatus('copyStatus', 'Nhap link Sheet', true); return; }
+  var code = 'function copySheet() {\n' +
+    '  var ss = SpreadsheetApp.getActiveSpreadsheet();\n' +
+    '  var file = DriveApp.getFileById(ss.getId());\n' +
+    '  var newFile = file.makeCopy("' + newName.replace(/"/g, '\\"') + '");\n' +
+    '  var newUrl = "https://docs.google.com/spreadsheets/d/" + newFile.getId() + "/edit";\n' +
+    '  SpreadsheetApp.getUi().alert("Xong! File moi (sach lich su):\\n" + newUrl);\n' +
+    '}';
 
-  showStatus('copyStatus', 'Dang copy...', false);
-
-  try {
-    var res = await fetch('https://www.googleapis.com/drive/v3/files/' + sheetId + '/copy', {
-      method: 'POST',
-      headers: { Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: newName })
-    });
-    var data = await res.json();
-    if (data.error) throw new Error(data.error.message);
-
-    var newUrl = 'https://docs.google.com/spreadsheets/d/' + data.id + '/edit';
-    showStatus('copyStatus', 'Xong! <a href="' + newUrl + '" target="_blank" style="color:#059669;font-weight:700;">Mo Sheet moi</a> (sach lich su)', false);
-  } catch (e) {
-    showStatus('copyStatus', 'Loi: ' + e.message, true);
-  }
+  document.getElementById('copyCode').value = code;
+  document.getElementById('copyCode').style.display = 'block';
+  document.getElementById('btnCopyCopyCode').style.display = 'inline-flex';
+  showStatus('copyStatus', 'Code da san sang! Copy va dan vao Apps Script.', false);
 }
 
-// ========== SET FILE DATE ==========
-async function setFileDate() {
-  ensureAuth(function() { _setFileDate(); });
+function copyCopyCode() {
+  var ta = document.getElementById('copyCode');
+  ta.select();
+  document.execCommand('copy');
+  showStatus('copyStatus', 'Da copy code!', false);
 }
-async function _setFileDate() {
-  var fileUrl = document.getElementById('setDateFileUrl').value;
-  var fileId = extractSheetId(fileUrl) || fileUrl.trim();
-  var newCreated = new Date(document.getElementById('newCreatedDate').value).toISOString();
-  var newModified = new Date(document.getElementById('newModifiedDate').value).toISOString();
 
-  if (!fileId) { showStatus('dateStatus', 'Nhap link hoac ID file', true); return; }
+// ========== SET FILE DATE CODE ==========
+function generateDateCode() {
+  var newModified = document.getElementById('newModifiedDate').value;
+  if (!newModified) { showStatus('dateStatus', 'Chon ngay sua moi', true); return; }
 
-  showStatus('dateStatus', 'Dang set ngay...', false);
+  var code = 'function setModifiedDate() {\n' +
+    '  var fileId = SpreadsheetApp.getActiveSpreadsheet().getId();\n' +
+    '  var newDate = new Date("' + newModified + '");\n' +
+    '  \n' +
+    '  Drive.Files.update(\n' +
+    '    { modifiedDate: newDate.toISOString() },\n' +
+    '    fileId\n' +
+    '  );\n' +
+    '  \n' +
+    '  SpreadsheetApp.getUi().alert("Xong! Da set ngay sua thanh: " + newDate.toLocaleString("vi-VN"));\n' +
+    '}\n' +
+    '\n' +
+    '// LUU Y: Phai bat Drive API trong Apps Script:\n' +
+    '// Menu Services (ben trai) → + → chon "Drive API" → Add';
 
-  try {
-    var res = await fetch('https://www.googleapis.com/drive/v3/files/' + fileId + '?fields=createdTime,modifiedTime', {
-      method: 'PATCH',
-      headers: { Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        createdTime: newCreated,
-        modifiedTime: newModified
-      })
-    });
-    var data = await res.json();
-    if (data.error) throw new Error(data.error.message);
+  document.getElementById('dateCode').value = code;
+  document.getElementById('dateCode').style.display = 'block';
+  document.getElementById('btnCopyDateCode').style.display = 'inline-flex';
+  showStatus('dateStatus', 'Code da san sang! Copy va dan vao Apps Script.', false);
+}
 
-    showStatus('dateStatus', 'Xong! createdTime: ' + data.createdTime + ', modifiedTime: ' + data.modifiedTime, false);
-  } catch (e) {
-    showStatus('dateStatus', 'Loi: ' + e.message, true);
-  }
+function copyDateCode() {
+  var ta = document.getElementById('dateCode');
+  ta.select();
+  document.execCommand('copy');
+  showStatus('dateStatus', 'Da copy code!', false);
 }
 
 // ========== UTILS ==========
@@ -714,15 +675,6 @@ function addLog(msg) {
   el.scrollTop = el.scrollHeight;
 }
 
-// Init GIS
-window.addEventListener('load', function() {
-  var wait = setInterval(function() {
-    if (typeof google !== 'undefined' && google.accounts) {
-      clearInterval(wait);
-      initGIS();
-    }
-  }, 100);
-});
 </script>
 </body>
 </html>

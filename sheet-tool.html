@@ -343,11 +343,12 @@ function checkAuth() {
     accessToken = params.get('access_token');
     localStorage.setItem('gft_token', accessToken);
     window.history.replaceState(null, '', window.location.pathname);
+    fetchUserInfo();
   } else {
     accessToken = localStorage.getItem('gft_token');
-  }
-  if (accessToken) {
-    fetchUserInfo();
+    if (accessToken) {
+      fetchUserInfo();
+    }
   }
 }
 

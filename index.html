@@ -248,6 +248,7 @@ const CORS_PROXIES = [
 
 let formData = null;
 let formAction = null;
+let formPageCount = 1;
 let sw = null;
 
 const $ = id => document.getElementById(id);
@@ -369,7 +370,12 @@ function parseForm(html) {
     }
   }
 
-  return { questions, formAction: formActionUrl };
+  let pageCount = 1;
+  for (const item of items) {
+    if (item[3] === 8) pageCount++;
+  }
+
+  return { questions, formAction: formActionUrl, pageCount };
 }
 
 function renderQuestions(questions) {
@@ -471,7 +477,9 @@ async function submitOnce(configs) {
     }
   }
   params.append('fvv', '1');
-  params.append('pageHistory', '0');
+  var ph = [];
+  for (var p = 0; p < formPageCount; p++) ph.push(p);
+  params.append('pageHistory', ph.join(','));
   params.append('fbzx', String(Date.now() * -1 + Math.floor(Math.random() * 1000000)));
   await fetch(formAction, {
     method: 'POST',
@@ -511,9 +519,10 @@ $('scanBtn').addEventListener('click', async () => {
     }
 
     formData = result.questions;
+    formPageCount = result.pageCount || 1;
     renderQuestions(formData);
     $('actionsCard').style.display = 'block';
-    setStatus('Tim thay ' + formData.length + ' cau hoi', 'ok');
+    setStatus('Tim thay ' + formData.length + ' cau hoi (' + formPageCount + ' trang)', 'ok');
   } catch (e) {
     setStatus('Loi: ' + e.message, 'err');
   }

@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Khanh Huyen Beautiful - Sheet Tool</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&family=Pacifico&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Quicksand', 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 30%, #f0fdf4 60%, #ecfdf5 100%);
+    color: #1e293b;
+    min-height: 100vh;
+  }
+  .header {
+    background: linear-gradient(135deg, #059669, #10b981, #34d399);
+    padding: 28px 20px 22px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(16,185,129,0.3);
+  }
+  .header::before {
+    content: '';
+    position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
+    animation: shimmer 8s ease-in-out infinite;
+  }
+  @keyframes shimmer {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(10%, 10%); }
+  }
+  .header-content { position: relative; z-index: 1; }
+  .avatar-wrap {
+    width: 70px; height: 70px; border-radius: 50%;
+    border: 3px solid rgba(255,255,255,0.8);
+    overflow: hidden; margin: 0 auto 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  }
+  .avatar-wrap img { width: 100%; height: 100%; object-fit: cover; }
+  .brand {
+    font-family: 'Pacifico', cursive;
+    font-size: 24px; color: #fff;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    margin-bottom: 4px;
+  }
+  .subtitle { font-size: 13px; color: rgba(255,255,255,0.85); }
+
+  .container { max-width: 700px; margin: 0 auto; padding: 20px 16px; }
+
+  .nav-tabs {
+    display: flex; gap: 8px; margin-bottom: 20px;
+    background: #fff; border-radius: 12px; padding: 6px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+  .nav-tab {
+    flex: 1; padding: 10px 8px; border: none; background: none;
+    border-radius: 8px; cursor: pointer; font-family: inherit;
+    font-size: 13px; font-weight: 600; color: #64748b;
+    transition: all 0.2s;
+  }
+  .nav-tab.active {
+    background: linear-gradient(135deg, #059669, #10b981);
+    color: #fff; box-shadow: 0 2px 8px rgba(16,185,129,0.3);
+  }
+  .nav-tab:hover:not(.active) { background: #f0fdf4; color: #059669; }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  .card {
+    background: #fff; border-radius: 14px; padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    border: 1px solid #e2e8f0;
+  }
+  .card h3 {
+    font-size: 16px; color: #059669; margin-bottom: 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .card h3 .icon { font-size: 20px; }
+
+  label { display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 4px; }
+  input[type="text"], input[type="url"], input[type="number"], input[type="datetime-local"], select {
+    width: 100%; padding: 10px 14px; border: 2px solid #e2e8f0;
+    border-radius: 10px; font-family: inherit; font-size: 14px;
+    transition: border-color 0.2s; background: #f8fafc;
+    margin-bottom: 12px;
+  }
+  input:focus, select:focus { outline: none; border-color: #10b981; background: #fff; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 12px 24px; border: none; border-radius: 10px;
+    font-family: inherit; font-size: 14px; font-weight: 700;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #059669, #10b981);
+    color: #fff; box-shadow: 0 2px 8px rgba(16,185,129,0.3);
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(16,185,129,0.4); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .btn-danger {
+    background: linear-gradient(135deg, #dc2626, #ef4444);
+    color: #fff;
+  }
+  .btn-secondary {
+    background: #f1f5f9; color: #475569; border: 2px solid #e2e8f0;
+  }
+
+  .btn-google {
+    background: #fff; color: #333; border: 2px solid #e2e8f0;
+    padding: 12px 24px; font-size: 15px; width: 100%;
+    justify-content: center;
+  }
+  .btn-google:hover { background: #f8fafc; border-color: #10b981; }
+  .btn-google img { width: 20px; height: 20px; }
+
+  .status-bar {
+    background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px;
+    padding: 10px 14px; margin-bottom: 12px; font-size: 13px; color: #166534;
+    display: none;
+  }
+  .status-bar.error { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+  .status-bar.show { display: block; }
+
+  .user-info {
+    display: flex; align-items: center; gap: 10px;
+    background: #f0fdf4; border-radius: 10px; padding: 12px;
+    margin-bottom: 16px; border: 1px solid #bbf7d0;
+  }
+  .user-info img { width: 36px; height: 36px; border-radius: 50%; }
+  .user-info .name { font-weight: 700; font-size: 14px; color: #166534; }
+  .user-info .email { font-size: 12px; color: #64748b; }
+  .user-info .logout { margin-left: auto; font-size: 12px; color: #ef4444; cursor: pointer; font-weight: 600; }
+
+  .row { display: flex; gap: 12px; }
+  .row > * { flex: 1; }
+
+  #log {
+    background: #1e293b; color: #a7f3d0; border-radius: 10px;
+    padding: 14px; font-family: 'Consolas', monospace; font-size: 12px;
+    max-height: 200px; overflow-y: auto; line-height: 1.6;
+    white-space: pre-wrap; margin-top: 12px;
+  }
+
+  .hidden { display: none !important; }
+
+  @media (max-width: 600px) {
+    .nav-tabs { flex-wrap: wrap; }
+    .nav-tab { font-size: 12px; padding: 8px 4px; }
+    .row { flex-direction: column; gap: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-content">
+    <div class="avatar-wrap"><img src="avatar.jpg" alt="avatar"></div>
+    <div class="brand">Khanh Huyen Beautiful</div>
+    <div class="subtitle">Google Form & Sheet Tool</div>
+  </div>
+</div>
+
+<div class="container">
+  <!-- Login -->
+  <div id="loginSection">
+    <div class="card" style="text-align:center; margin-top: 20px;">
+      <h3 style="justify-content:center"><span class="icon">🔐</span> Dang nhap Google</h3>
+      <p style="font-size:13px; color:#64748b; margin-bottom:16px;">Dang nhap de su dung cac tinh nang Sheets & Drive</p>
+      <button class="btn btn-google" onclick="handleLogin()">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G"> Dang nhap voi Google
+      </button>
+    </div>
+  </div>
+
+  <!-- Main App -->
+  <div id="mainApp" class="hidden">
+    <div id="userInfo" class="user-info hidden">
+      <img id="userAvatar" src="" alt="">
+      <div>
+        <div id="userName" class="name"></div>
+        <div id="userEmail" class="email"></div>
+      </div>
+      <span class="logout" onclick="handleLogout()">Dang xuat</span>
+    </div>
+
+    <div class="nav-tabs">
+      <button class="nav-tab active" onclick="switchTab('formFiller')">Auto Fill</button>
+      <button class="nav-tab" onclick="switchTab('editTimestamp')">Sua Timestamp</button>
+      <button class="nav-tab" onclick="switchTab('copySheet')">Copy Sheet</button>
+      <button class="nav-tab" onclick="switchTab('setDate')">Set Ngay Tao</button>
+    </div>
+
+    <!-- Tab 1: Form Filler -->
+    <div id="tab-formFiller" class="tab-content active">
+      <div class="card">
+        <h3><span class="icon">📝</span> Auto Fill Google Form</h3>
+        <label>Link Google Form</label>
+        <input type="url" id="formUrl" placeholder="https://docs.google.com/forms/d/e/.../viewform">
+        <button class="btn btn-primary" onclick="scanForm()">Quet Form</button>
+      </div>
+      <div id="formQuestions"></div>
+      <div id="formActions" class="hidden">
+        <div class="card">
+          <h3><span class="icon">⚙️</span> Cai dat</h3>
+          <div class="row">
+            <div>
+              <label>So lan gui</label>
+              <input type="number" id="submitCount" value="10" min="1">
+            </div>
+            <div>
+              <label>Delay min (ms)</label>
+              <input type="number" id="delayMin" value="800">
+            </div>
+            <div>
+              <label>Delay max (ms)</label>
+              <input type="number" id="delayMax" value="3000">
+            </div>
+          </div>
+          <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
+            <button class="btn btn-primary" onclick="submitMany()">🚀 Gui Nhieu Lan</button>
+            <button class="btn btn-danger" onclick="stopSubmit()" id="btnStop" disabled>⏹ Dung</button>
+          </div>
+          <div id="submitStatus" class="status-bar"></div>
+          <div id="log"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 2: Edit Timestamp -->
+    <div id="tab-editTimestamp" class="tab-content">
+      <div class="card">
+        <h3><span class="icon">🕐</span> Sua Timestamp trong Sheet</h3>
+        <label>Link Google Sheet</label>
+        <input type="url" id="sheetUrl" placeholder="https://docs.google.com/spreadsheets/d/.../edit">
+        <label>Ten Sheet (tab)</label>
+        <input type="text" id="sheetName" value="Form_Responses" placeholder="Form_Responses hoac Câu trả lời biểu mẫu 1">
+        <div class="row">
+          <div>
+            <label>Tu ngay</label>
+            <input type="datetime-local" id="dateFrom" value="2026-01-01T07:00">
+          </div>
+          <div>
+            <label>Den ngay</label>
+            <input type="datetime-local" id="dateTo" value="2026-06-17T23:00">
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label>Gio min</label>
+            <input type="number" id="hourMin" value="7" min="0" max="23">
+          </div>
+          <div>
+            <label>Gio max</label>
+            <input type="number" id="hourMax" value="23" min="0" max="23">
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="editTimestamps()" style="margin-top:8px;">🕐 Random Timestamp</button>
+        <div id="tsStatus" class="status-bar"></div>
+      </div>
+    </div>
+
+    <!-- Tab 3: Copy Sheet -->
+    <div id="tab-copySheet" class="tab-content">
+      <div class="card">
+        <h3><span class="icon">📋</span> Copy Sheet (Xoa lich su)</h3>
+        <p style="font-size:13px; color:#64748b; margin-bottom:12px;">
+          Tao ban sao spreadsheet — sheet moi se <b>sach lich su chinh sua</b>, khong to xanh.
+        </p>
+        <label>Link Google Sheet goc</label>
+        <input type="url" id="copySheetUrl" placeholder="https://docs.google.com/spreadsheets/d/.../edit">
+        <label>Ten file moi</label>
+        <input type="text" id="copyName" placeholder="VD: Ket qua khao sat">
+        <button class="btn btn-primary" onclick="copySheet()">📋 Copy Sheet</button>
+        <div id="copyStatus" class="status-bar"></div>
+      </div>
+    </div>
+
+    <!-- Tab 4: Set Creation Date -->
+    <div id="tab-setDate" class="tab-content">
+      <div class="card">
+        <h3><span class="icon">📅</span> Set Ngay Tao File</h3>
+        <p style="font-size:13px; color:#64748b; margin-bottom:12px;">
+          Thay doi ngay tao & ngay sua cua file Google Drive.
+        </p>
+        <label>Link hoac ID file Google Drive</label>
+        <input type="url" id="setDateFileUrl" placeholder="https://docs.google.com/spreadsheets/d/.../edit hoac file ID">
+        <div class="row">
+          <div>
+            <label>Ngay tao moi</label>
+            <input type="datetime-local" id="newCreatedDate" value="2026-01-01T08:00">
+          </div>
+          <div>
+            <label>Ngay sua moi</label>
+            <input type="datetime-local" id="newModifiedDate" value="2026-06-17T22:00">
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="setFileDate()">📅 Set Ngay</button>
+        <div id="dateStatus" class="status-bar"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var CLIENT_ID = '282620003952-9pqqir6rk6836ndcouudrrlh37msjs5h.apps.googleusercontent.com';
+var SCOPES = 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/spreadsheets';
+var accessToken = null;
+var formAction = '';
+var formData = [];
+var pageCount = 1;
+var configs = [];
+var running = false;
+
+// ========== AUTH ==========
+function handleLogin() {
+  var redirectUri = window.location.origin + window.location.pathname;
+  var authUrl = 'https://accounts.google.com/o/oauth2/v2/auth' +
+    '?client_id=' + encodeURIComponent(CLIENT_ID) +
+    '&redirect_uri=' + encodeURIComponent(redirectUri) +
+    '&response_type=token' +
+    '&scope=' + encodeURIComponent(SCOPES) +
+    '&prompt=consent';
+  window.location.href = authUrl;
+}
+
+function handleLogout() {
+  accessToken = null;
+  localStorage.removeItem('gft_token');
+  document.getElementById('loginSection').classList.remove('hidden');
+  document.getElementById('mainApp').classList.add('hidden');
+}
+
+function checkAuth() {
+  var hash = window.location.hash;
+  if (hash && hash.includes('access_token')) {
+    var params = new URLSearchParams(hash.substring(1));
+    accessToken = params.get('access_token');
+    localStorage.setItem('gft_token', accessToken);
+    window.history.replaceState(null, '', window.location.pathname);
+  } else {
+    accessToken = localStorage.getItem('gft_token');
+  }
+  if (accessToken) {
+    fetchUserInfo();
+  }
+}
+
+function fetchUserInfo() {
+  fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+    headers: { Authorization: 'Bearer ' + accessToken }
+  }).then(function(r) { return r.json(); })
+  .then(function(user) {
+    if (user.error) { handleLogout(); return; }
+    document.getElementById('loginSection').classList.add('hidden');
+    document.getElementById('mainApp').classList.remove('hidden');
+    document.getElementById('userInfo').classList.remove('hidden');
+    document.getElementById('userAvatar').src = user.picture || '';
+    document.getElementById('userName').textContent = user.name || '';
+    document.getElementById('userEmail').textContent = user.email || '';
+  }).catch(function() { handleLogout(); });
+}
+
+// ========== TABS ==========
+function switchTab(tabName) {
+  document.querySelectorAll('.tab-content').forEach(function(el) { el.classList.remove('active'); });
+  document.querySelectorAll('.nav-tab').forEach(function(el) { el.classList.remove('active'); });
+  document.getElementById('tab-' + tabName).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ========== FORM FILLER ==========
+function fetchWithProxy(url) {
+  var proxies = [
+    'https://api.allorigins.win/raw?url=' + encodeURIComponent(url),
+    'https://corsproxy.io/?' + encodeURIComponent(url),
+    'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(url)
+  ];
+  function tryProxy(i) {
+    if (i >= proxies.length) return Promise.reject('All proxies failed');
+    return fetch(proxies[i]).then(function(r) {
+      if (!r.ok) throw new Error('Proxy ' + i + ' failed');
+      return r.text();
+    }).catch(function() { return tryProxy(i + 1); });
+  }
+  return tryProxy(0);
+}
+
+function parseForm(html) {
+  var match = html.match(/FB_PUBLIC_LOAD_DATA_\s*=\s*([\s\S]*?);\s*<\/script>/);
+  if (!match) throw new Error('Khong tim thay du lieu form');
+  var raw = JSON.parse(match[1]);
+  var items = raw[1][1];
+  pageCount = 1;
+  var questions = [];
+  for (var i = 0; i < items.length; i++) {
+    var item = items[i];
+    var type = item[3];
+    if (type === 8) { pageCount++; continue; }
+    var title = item[1] || '';
+    var qData = item[4];
+    if (!qData || !qData.length) continue;
+    if (type === 7) {
+      for (var r = 0; r < qData.length; r++) {
+        var rowField = qData[r];
+        var rowLabel = Array.isArray(rowField[3]) ? rowField[3][0] : (rowField[3] || '');
+        var opts = rowField[1].map(function(o) { return o[0]; });
+        questions.push({
+          title: title + ' - ' + rowLabel,
+          type: 'radio',
+          entryId: 'entry.' + rowField[0],
+          options: opts
+        });
+      }
+    } else {
+      var first = qData[0];
+      var entryId = 'entry.' + first[0];
+      var opts = [];
+      if (first[1]) opts = first[1].map(function(o) { return o[0]; });
+      var qType = 'text';
+      if (type === 0) qType = 'text';
+      else if (type === 1) qType = 'paragraph';
+      else if (type === 2) qType = 'radio';
+      else if (type === 3) qType = 'dropdown';
+      else if (type === 4) qType = 'checkbox';
+      else if (type === 5) qType = 'scale';
+      questions.push({ title: title, type: qType, entryId: entryId, options: opts });
+    }
+  }
+  return questions;
+}
+
+function scanForm() {
+  var url = document.getElementById('formUrl').value.trim();
+  if (!url) return;
+  formAction = url.replace(/\/viewform.*/, '/formResponse');
+  addLog('Dang quet form...');
+  fetchWithProxy(url).then(function(html) {
+    formData = parseForm(html);
+    addLog('Tim thay ' + formData.length + ' cau hoi, ' + pageCount + ' trang');
+    renderQuestions(formData);
+    document.getElementById('formActions').classList.remove('hidden');
+  }).catch(function(e) { addLog('Loi: ' + e); });
+}
+
+function renderQuestions(questions) {
+  var container = document.getElementById('formQuestions');
+  container.innerHTML = '';
+  configs = [];
+  for (var i = 0; i < questions.length; i++) {
+    var q = questions[i];
+    var card = document.createElement('div');
+    card.className = 'card';
+    var html = '<h3 style="font-size:14px;color:#334155;">Cau ' + (i + 1) + ': ' + q.title + '</h3>';
+    html += '<div style="font-size:11px;color:#94a3b8;margin-bottom:8px;">Loai: ' + q.type + ' | ' + q.entryId + '</div>';
+    if (q.type === 'text' || q.type === 'paragraph') {
+      html += '<label>Cac cau tra loi (moi dong 1 cau)</label>';
+      html += '<textarea data-q="' + i + '" rows="3" style="width:100%;padding:8px;border:2px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:13px;resize:vertical;"></textarea>';
+      configs.push({ type: q.type, values: [] });
+    } else {
+      configs.push({ type: q.type, percentages: [] });
+      for (var j = 0; j < q.options.length; j++) {
+        html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">';
+        html += '<span style="flex:1;font-size:13px;">' + q.options[j] + '</span>';
+        html += '<input type="number" data-q="' + i + '" data-o="' + j + '" value="50" min="0" max="100" style="width:60px;padding:4px 8px;border:2px solid #e2e8f0;border-radius:6px;font-size:13px;text-align:center;">';
+        html += '<span style="font-size:11px;color:#94a3b8;">%</span>';
+        html += '</div>';
+      }
+    }
+    card.innerHTML = html;
+    container.appendChild(card);
+  }
+}
+
+function gatherConfigs() {
+  for (var i = 0; i < configs.length; i++) {
+    if (configs[i].type === 'text' || configs[i].type === 'paragraph') {
+      var ta = document.querySelector('textarea[data-q="' + i + '"]');
+      configs[i].values = ta ? ta.value.split('\n').filter(function(v) { return v.trim(); }) : [];
+    } else {
+      configs[i].percentages = [];
+      var inputs = document.querySelectorAll('input[data-q="' + i + '"]');
+      inputs.forEach(function(inp) {
+        configs[i].percentages.push(parseFloat(inp.value) || 0);
+      });
+    }
+  }
+}
+
+function pickByPct(options, pcts) {
+  var total = pcts.reduce(function(a, b) { return a + b; }, 0);
+  if (total === 0) return options[0];
+  var r = Math.random() * total;
+  var sum = 0;
+  for (var i = 0; i < pcts.length; i++) {
+    sum += pcts[i];
+    if (r < sum) return options[i];
+  }
+  return options[options.length - 1];
+}
+
+function pickMulti(options, pcts) {
+  var sel = [];
+  for (var i = 0; i < options.length; i++) {
+    if (Math.random() * 100 < pcts[i]) sel.push(options[i]);
+  }
+  return sel.length ? sel : [options[0]];
+}
+
+function genAnswer(q, cfg) {
+  if (q.type === 'text' || q.type === 'paragraph') {
+    return (!cfg.values || !cfg.values.length) ? '' : cfg.values[Math.floor(Math.random() * cfg.values.length)];
+  }
+  if (q.type === 'checkbox') return pickMulti(q.options, cfg.percentages || []);
+  return pickByPct(q.options, cfg.percentages || []);
+}
+
+function submitOnce() {
+  return new Promise(function(resolve) {
+    var frameName = 'sf_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+    var iframe = document.createElement('iframe');
+    iframe.name = frameName;
+    iframe.style.display = 'none';
+    document.body.appendChild(iframe);
+    var form = document.createElement('form');
+    form.method = 'POST';
+    form.action = formAction;
+    form.target = frameName;
+    form.style.display = 'none';
+    for (var i = 0; i < formData.length; i++) {
+      var answer = genAnswer(formData[i], configs[i]);
+      if (formData[i].type === 'checkbox' && Array.isArray(answer)) {
+        answer.forEach(function(a) {
+          var inp = document.createElement('input');
+          inp.type = 'hidden'; inp.name = formData[i].entryId; inp.value = a;
+          form.appendChild(inp);
+        });
+      } else {
+        var inp = document.createElement('input');
+        inp.type = 'hidden'; inp.name = formData[i].entryId; inp.value = answer;
+        form.appendChild(inp);
+      }
+    }
+    var h1 = document.createElement('input'); h1.type = 'hidden'; h1.name = 'fvv'; h1.value = '1'; form.appendChild(h1);
+    var ph = []; for (var p = 0; p < pageCount; p++) ph.push(p);
+    var h2 = document.createElement('input'); h2.type = 'hidden'; h2.name = 'pageHistory'; h2.value = ph.join(','); form.appendChild(h2);
+    var h3 = document.createElement('input'); h3.type = 'hidden'; h3.name = 'fbzx'; h3.value = String(Date.now() * -1 + Math.floor(Math.random() * 1000000)); form.appendChild(h3);
+    document.body.appendChild(form);
+    form.submit();
+    setTimeout(function() { form.remove(); iframe.remove(); resolve(); }, 1500);
+  });
+}
+
+function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+async function submitMany() {
+  gatherConfigs();
+  var count = parseInt(document.getElementById('submitCount').value) || 10;
+  var dMin = parseInt(document.getElementById('delayMin').value) || 800;
+  var dMax = parseInt(document.getElementById('delayMax').value) || 3000;
+  running = true;
+  document.getElementById('btnStop').disabled = false;
+  var ok = 0, fail = 0;
+  for (var n = 0; n < count; n++) {
+    if (!running) break;
+    try {
+      await submitOnce();
+      ok++;
+      showStatus('submitStatus', 'Gui ' + (n + 1) + '/' + count + ' (OK: ' + ok + ', Loi: ' + fail + ')', false);
+      addLog('[' + (n + 1) + '/' + count + '] OK');
+    } catch (e) {
+      fail++;
+      addLog('[' + (n + 1) + '/' + count + '] LOI: ' + e);
+    }
+    if (running && n < count - 1) {
+      var delay = randInt(dMin, dMax);
+      addLog('Doi ' + delay + 'ms...');
+      await new Promise(function(r) { setTimeout(r, delay); });
+    }
+  }
+  running = false;
+  document.getElementById('btnStop').disabled = true;
+  showStatus('submitStatus', 'Hoan tat! OK: ' + ok + ', Loi: ' + fail, false);
+  addLog('=== XONG === OK: ' + ok + ', Loi: ' + fail);
+}
+
+function stopSubmit() { running = false; }
+
+// ========== EDIT TIMESTAMP ==========
+function extractSheetId(url) {
+  var m = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  return m ? m[1] : url.trim();
+}
+
+async function editTimestamps() {
+  var sheetId = extractSheetId(document.getElementById('sheetUrl').value);
+  var sheetName = document.getElementById('sheetName').value.trim() || 'Form_Responses';
+  var dateFrom = new Date(document.getElementById('dateFrom').value);
+  var dateTo = new Date(document.getElementById('dateTo').value);
+  var hMin = parseInt(document.getElementById('hourMin').value) || 7;
+  var hMax = parseInt(document.getElementById('hourMax').value) || 23;
+
+  if (!sheetId) { showStatus('tsStatus', 'Nhap link Sheet', true); return; }
+
+  showStatus('tsStatus', 'Dang doc du lieu...', false);
+
+  try {
+    var res = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + sheetId + '/values/' + encodeURIComponent(sheetName) + '!A:A', {
+      headers: { Authorization: 'Bearer ' + accessToken }
+    });
+    var data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+
+    var rowCount = data.values ? data.values.length - 1 : 0;
+    if (rowCount < 1) { showStatus('tsStatus', 'Khong co du lieu', true); return; }
+
+    showStatus('tsStatus', 'Dang random ' + rowCount + ' timestamp...', false);
+
+    var startMs = dateFrom.getTime();
+    var endMs = dateTo.getTime();
+    var timestamps = [];
+    for (var i = 0; i < rowCount; i++) {
+      var randMs = startMs + Math.random() * (endMs - startMs);
+      var d = new Date(randMs);
+      var h = Math.floor(Math.random() * (hMax - hMin)) + hMin;
+      d.setHours(h, Math.floor(Math.random() * 60), Math.floor(Math.random() * 60));
+      timestamps.push(d);
+    }
+    timestamps.sort(function(a, b) { return a - b; });
+
+    var values = timestamps.map(function(t) {
+      var dd = ('0' + t.getDate()).slice(-2);
+      var mm = ('0' + (t.getMonth() + 1)).slice(-2);
+      var yyyy = t.getFullYear();
+      var hh = ('0' + t.getHours()).slice(-2);
+      var mi = ('0' + t.getMinutes()).slice(-2);
+      var ss = ('0' + t.getSeconds()).slice(-2);
+      return [dd + '/' + mm + '/' + yyyy + ' ' + hh + ':' + mi + ':' + ss];
+    });
+
+    var updateRes = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + sheetId + '/values/' + encodeURIComponent(sheetName) + '!A2:A' + (rowCount + 1) + '?valueInputOption=USER_ENTERED', {
+      method: 'PUT',
+      headers: { Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ values: values })
+    });
+    var updateData = await updateRes.json();
+    if (updateData.error) throw new Error(updateData.error.message);
+
+    showStatus('tsStatus', 'Xong! Da random ' + rowCount + ' timestamp', false);
+  } catch (e) {
+    showStatus('tsStatus', 'Loi: ' + e.message, true);
+  }
+}
+
+// ========== COPY SHEET ==========
+async function copySheet() {
+  var sheetId = extractSheetId(document.getElementById('copySheetUrl').value);
+  var newName = document.getElementById('copyName').value.trim() || 'Copy - Sheet';
+
+  if (!sheetId) { showStatus('copyStatus', 'Nhap link Sheet', true); return; }
+
+  showStatus('copyStatus', 'Dang copy...', false);
+
+  try {
+    var res = await fetch('https://www.googleapis.com/drive/v3/files/' + sheetId + '/copy', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: newName })
+    });
+    var data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+
+    var newUrl = 'https://docs.google.com/spreadsheets/d/' + data.id + '/edit';
+    showStatus('copyStatus', 'Xong! <a href="' + newUrl + '" target="_blank" style="color:#059669;font-weight:700;">Mo Sheet moi</a> (sach lich su)', false);
+  } catch (e) {
+    showStatus('copyStatus', 'Loi: ' + e.message, true);
+  }
+}
+
+// ========== SET FILE DATE ==========
+async function setFileDate() {
+  var fileUrl = document.getElementById('setDateFileUrl').value;
+  var fileId = extractSheetId(fileUrl) || fileUrl.trim();
+  var newCreated = new Date(document.getElementById('newCreatedDate').value).toISOString();
+  var newModified = new Date(document.getElementById('newModifiedDate').value).toISOString();
+
+  if (!fileId) { showStatus('dateStatus', 'Nhap link hoac ID file', true); return; }
+
+  showStatus('dateStatus', 'Dang set ngay...', false);
+
+  try {
+    var res = await fetch('https://www.googleapis.com/drive/v3/files/' + fileId + '?fields=createdTime,modifiedTime', {
+      method: 'PATCH',
+      headers: { Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        createdTime: newCreated,
+        modifiedTime: newModified
+      })
+    });
+    var data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+
+    showStatus('dateStatus', 'Xong! createdTime: ' + data.createdTime + ', modifiedTime: ' + data.modifiedTime, false);
+  } catch (e) {
+    showStatus('dateStatus', 'Loi: ' + e.message, true);
+  }
+}
+
+// ========== UTILS ==========
+function showStatus(id, msg, isError) {
+  var el = document.getElementById(id);
+  el.innerHTML = msg;
+  el.className = 'status-bar show' + (isError ? ' error' : '');
+}
+
+function addLog(msg) {
+  var el = document.getElementById('log');
+  el.textContent += msg + '\n';
+  el.scrollTop = el.scrollHeight;
+}
+
+// Init
+checkAuth();
+</script>
+</body>
+</html>

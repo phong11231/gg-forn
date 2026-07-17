@@ -167,19 +167,8 @@
 </div>
 
 <div class="container">
-  <!-- Login -->
-  <div id="loginSection">
-    <div class="card" style="text-align:center; margin-top: 20px;">
-      <h3 style="justify-content:center"><span class="icon">🔐</span> Dang nhap Google</h3>
-      <p style="font-size:13px; color:#64748b; margin-bottom:16px;">Dang nhap de su dung cac tinh nang Sheets & Drive</p>
-      <button class="btn btn-google" onclick="handleLogin()">
-        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G"> Dang nhap voi Google
-      </button>
-    </div>
-  </div>
-
   <!-- Main App -->
-  <div id="mainApp" class="hidden">
+  <div id="mainApp">
     <div id="userInfo" class="user-info hidden">
       <img id="userAvatar" src="" alt="">
       <div>
@@ -307,49 +296,42 @@
   </div>
 </div>
 
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
 var CLIENT_ID = '282620003952-9pqqir6rk6836ndcouudrrlh37msjs5h.apps.googleusercontent.com';
 var SCOPES = 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/spreadsheets';
 var accessToken = null;
+var tokenClient = null;
 var formAction = '';
 var formData = [];
 var pageCount = 1;
 var configs = [];
 var running = false;
 
-// ========== AUTH ==========
-function handleLogin() {
-  var redirectUri = window.location.origin + window.location.pathname;
-  var authUrl = 'https://accounts.google.com/o/oauth2/v2/auth' +
-    '?client_id=' + encodeURIComponent(CLIENT_ID) +
-    '&redirect_uri=' + encodeURIComponent(redirectUri) +
-    '&response_type=token' +
-    '&scope=' + encodeURIComponent(SCOPES) +
-    '&prompt=consent';
-  window.location.href = authUrl;
+// ========== AUTH (GIS popup) ==========
+function initGIS() {
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID,
+    scope: SCOPES,
+    callback: function(resp) {
+      if (resp.error) return;
+      accessToken = resp.access_token;
+      fetchUserInfo();
+      if (window._pendingAction) { var fn = window._pendingAction; window._pendingAction = null; fn(); }
+    }
+  });
+}
+
+function ensureAuth(callback) {
+  if (accessToken) { callback(); return; }
+  window._pendingAction = callback;
+  tokenClient.requestAccessToken({ prompt: 'consent' });
 }
 
 function handleLogout() {
+  if (accessToken) google.accounts.oauth2.revoke(accessToken);
   accessToken = null;
-  localStorage.removeItem('gft_token');
-  document.getElementById('loginSection').classList.remove('hidden');
-  document.getElementById('mainApp').classList.add('hidden');
-}
-
-function checkAuth() {
-  var hash = window.location.hash;
-  if (hash && hash.includes('access_token')) {
-    var params = new URLSearchParams(hash.substring(1));
-    accessToken = params.get('access_token');
-    localStorage.setItem('gft_token', accessToken);
-    window.history.replaceState(null, '', window.location.pathname);
-    fetchUserInfo();
-  } else {
-    accessToken = localStorage.getItem('gft_token');
-    if (accessToken) {
-      fetchUserInfo();
-    }
-  }
+  document.getElementById('userInfo').classList.add('hidden');
 }
 
 function fetchUserInfo() {
@@ -357,14 +339,12 @@ function fetchUserInfo() {
     headers: { Authorization: 'Bearer ' + accessToken }
   }).then(function(r) { return r.json(); })
   .then(function(user) {
-    if (user.error) { handleLogout(); return; }
-    document.getElementById('loginSection').classList.add('hidden');
-    document.getElementById('mainApp').classList.remove('hidden');
+    if (user.error) { accessToken = null; return; }
     document.getElementById('userInfo').classList.remove('hidden');
     document.getElementById('userAvatar').src = user.picture || '';
     document.getElementById('userName').textContent = user.name || '';
     document.getElementById('userEmail').textContent = user.email || '';
-  }).catch(function() { handleLogout(); });
+  }).catch(function() { accessToken = null; });
 }
 
 // ========== TABS ==========
@@ -599,6 +579,9 @@ function extractSheetId(url) {
 }
 
 async function editTimestamps() {
+  ensureAuth(function() { _editTimestamps(); });
+}
+async function _editTimestamps() {
   var sheetId = extractSheetId(document.getElementById('sheetUrl').value);
   var sheetName = document.getElementById('sheetName').value.trim() || 'Form_Responses';
   var dateFrom = new Date(document.getElementById('dateFrom').value);
@@ -660,6 +643,9 @@ async function editTimestamps() {
 
 // ========== COPY SHEET ==========
 async function copySheet() {
+  ensureAuth(function() { _copySheet(); });
+}
+async function _copySheet() {
   var sheetId = extractSheetId(document.getElementById('copySheetUrl').value);
   var newName = document.getElementById('copyName').value.trim() || 'Copy - Sheet';
 
@@ -685,6 +671,9 @@ async function copySheet() {
 
 // ========== SET FILE DATE ==========
 async function setFileDate() {
+  ensureAuth(function() { _setFileDate(); });
+}
+async function _setFileDate() {
   var fileUrl = document.getElementById('setDateFileUrl').value;
   var fileId = extractSheetId(fileUrl) || fileUrl.trim();
   var newCreated = new Date(document.getElementById('newCreatedDate').value).toISOString();
@@ -725,8 +714,15 @@ function addLog(msg) {
   el.scrollTop = el.scrollHeight;
 }
 
-// Init
-checkAuth();
+// Init GIS
+window.addEventListener('load', function() {
+  var wait = setInterval(function() {
+    if (typeof google !== 'undefined' && google.accounts) {
+      clearInterval(wait);
+      initGIS();
+    }
+  }, 100);
+});
 </script>
 </body>
 </html>
